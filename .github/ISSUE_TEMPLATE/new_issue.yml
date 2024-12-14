@@ -64,7 +64,6 @@ body:
       label: Has Patch
       options:
         - label: Has Patch
-          description: Does this issue have a patch?
           required: false
 
   - type: checkboxes
@@ -73,7 +72,6 @@ body:
       label: UI/UX
       options:
         - label: UI/UX
-          description: UI/UX?
           required: false      
 
   - type: dropdown
@@ -139,7 +137,6 @@ body:
       label: Add Cc
       options:
         - label: Add Cc
-          description: Add Cc
           required: false
       
 
@@ -149,7 +146,6 @@ body:
       label: Easy Pickings
       options:
         - label: Easy Pickings
-          description: Easy Pickings
           required: false
 
   
