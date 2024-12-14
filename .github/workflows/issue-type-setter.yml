@@ -22,25 +22,32 @@ jobs:
               if (!typeMatch) return;
               
               const type = typeMatch[1].trim();
-              let issueType = 'ISSUE';  // Default to regular issue
+              let issueType = type === 'Bug' ? 'BUG' : 'ISSUE';
               
-              // Only set to bug if explicitly selected
-              if (type === 'Bug') {
-                issueType = 'BUG';
-              }
+              // First get the repository ID
+              const repoQuery = `
+                query($owner: String!, $name: String!) {
+                  repository(owner: $owner, name: $name) {
+                    id
+                  }
+                }
+              `;
               
-              // GraphQL mutation to update issue type
+              const repoData = await github.graphql(repoQuery, {
+                owner: context.repo.owner,
+                name: context.repo.repo
+              });
+              
+              // Now update the issue type
               const mutation = `
-                mutation($issueId: ID!, $type: IssueType!) {
-                  updateIssue(
-                    input: {
-                      id: "${issue.node_id}",
-                      issueType: $type
-                    }
-                  ) {
+                mutation($repositoryId: ID!, $issueId: ID!, $type: IssueType!) {
+                  updateIssue(input: {
+                    repositoryId: $repositoryId,
+                    id: $issueId,
+                    issueType: $type
+                  }) {
                     issue {
                       id
-                      issueType
                     }
                   }
                 }
@@ -48,13 +55,15 @@ jobs:
               
               try {
                 await github.graphql(mutation, {
+                  repositoryId: repoData.repository.id,
                   issueId: issue.node_id,
                   type: issueType
                 });
                 
-                console.log(`Successfully set issue type to ${issueType}`);
+                console.log(`Set issue #${issue.number} type to ${issueType}`);
               } catch (error) {
                 console.error('Error setting issue type:', error);
+                console.error('Error details:', JSON.stringify(error, null, 2));
               }
             }
             
