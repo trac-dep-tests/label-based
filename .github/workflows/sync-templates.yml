@@ -1,6 +1,7 @@
 # .github/workflows/sync-templates.yml
 name: Sync Issue Templates
 on:
+  workflow_dispatch:
   push:
     paths:
       - '.github/ISSUE_TEMPLATE/base.yml'
