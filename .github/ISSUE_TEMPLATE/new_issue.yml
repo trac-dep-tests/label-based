@@ -1,0 +1,146 @@
+name: Bug Report
+description: Report a bug (similar to Trac defect tickets)
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: A Summary of the issue
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A Description of the issue
+    validations:
+      required: true
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type
+      description: What type of issue is this?
+      options:
+        - Uncategorized
+        - Bug
+        - New Feature
+        - Cleanup / Optimization
+
+  - type: dropdown
+    id: version
+    attributes: 
+      label: Version
+      description: What version is this occurring in?
+      options: 
+        - dev
+        - 5.1
+        - 5.0
+        - 4.2
+        - 4.1
+        - 4.0
+        - 3.2
+        - 3.1
+        - 3.0
+        - 2.2
+        - 2.1
+        - 2.0
+
+  - type: input
+    id: keywords
+    attributes:
+      label: Keywords
+      description: Keywords to help categorize the issue
+
+  - type: boolean
+    id: has-patch
+    attributes:
+      label: Has Patch
+    validations:
+      required: true
+
+  - type: boolean
+    id: ui-ux
+    attributes:
+      label: UI/UX
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Which component is affected?
+      options:
+        - contrib.admin
+        - contrib.admindocs
+        - contrib.auth
+        - contrib.contenttypes
+        - contrib.flatpages
+        - contrib.humanize
+        - contrib.messages
+        - contrib.postgres
+        - contrib.redirects
+        - contrib.sessions
+        - contrib.sitemaps
+        - contrib.sites
+        - contrib.staticfiles
+        - contrib.syndication
+        - Core (Cache system)
+        - Core (Mail)
+        - Core (Management commands)
+        - Core (Other)
+        - Core (Serialization)
+        - Core (System checks)
+        - Core (URLs)
+        - CSRF
+        - Database layer (models, ORM)
+        - Documentation
+        - Error reporting
+        - File uploads/storage
+        - Forms
+        - Generic views
+        - GIS
+        - HTTP handling
+        - Internationalization
+        - Migrations
+        - Packaging
+        - Template system
+        - Testing framework
+        - Uncategorized (default selected)
+        - Utilities        
+    validations:
+      required: true
+      
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: How severe is this bug?
+      options:
+        - Normal
+        - Release Blocker
+    validations:
+      required: true
+      
+  - type: boolean
+    id: add-cc
+    attributes:
+      label: Add Cc
+    validations:
+      required: false
+
+  - type: boolean
+    id: easy-pickings
+    attributes:
+      label: Easy Pickings
+    validations:
+      required: false
+
+  
