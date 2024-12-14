@@ -16,9 +16,11 @@ jobs:
             async function setIssueType() {
               const issue = context.payload.issue;
               const body = issue.body;
+              log body;
               
               // Extract the Type field value
               const typeMatch = body.match(/### Type\s*\n\n(.+?)(?:\n\n|$)/s);
+              log typeMatch;
               if (!typeMatch) return;
               
               let type = typeMatch[1].trim();
