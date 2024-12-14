@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       issues: write
-    
+
     steps:
       - uses: actions/github-script@v7
         with:
@@ -16,17 +16,17 @@ jobs:
             async function labelIssue() {
               const issue = context.payload.issue;
               const labels = [];
-              
+
               // Parse the issue body to get form values
               const body = issue.body;
-              
+
               // Helper function to extract field value
               function getFieldValue(fieldId) {
                 const regex = new RegExp(`### ${fieldId}\\s*\\n\\n(.+?)\\n\\n`, 'is');
                 const match = body.match(regex);
                 return match ? match[1].trim() : null;
               }
-              
+
               // Handle Type
               const type = getFieldValue('Type');
               if (type) {
@@ -42,7 +42,7 @@ jobs:
                     break;
                 }
               }
-              
+
               // Handle Component
               const component = getFieldValue('Component');
               if (component && component !== 'Uncategorized (default selected)') {
@@ -54,13 +54,13 @@ jobs:
                   .replace(/[()]/g, '');
                 labels.push(`component:${componentLabel}`);
               }
-              
+
               // Handle Severity
               const severity = getFieldValue('Severity');
               if (severity === 'Release Blocker') {
                 labels.push('release-blocker');
               }
-              
+
               // Handle checkboxes
               if (body.includes('- [x] Has Patch')) {
                 labels.push('has-patch');
@@ -71,13 +71,13 @@ jobs:
               if (body.includes('- [x] Easy Pickings')) {
                 labels.push('easy-pickings');
               }
-              
+
               // Version label
               const version = getFieldValue('Version');
               if (version && version !== 'dev') {
                 labels.push(`version:${version}`);
               }
-              
+
               // Add labels if we have any
               if (labels.length > 0) {
                 await github.rest.issues.addLabels({
@@ -88,5 +88,5 @@ jobs:
                 });
               }
             }
-            
+
             await labelIssue();

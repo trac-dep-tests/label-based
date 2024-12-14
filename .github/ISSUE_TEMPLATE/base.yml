@@ -14,10 +14,10 @@ body:
 
   - type: dropdown
     id: version
-    attributes: 
+    attributes:
       label: Version
       description: What version is this occurring in?
-      options: 
+      options:
         - dev
         - 5.1
         - 5.0
@@ -51,7 +51,7 @@ body:
       label: UI/UX
       options:
         - label: UI/UX
-          required: false      
+          required: false
 
   - type: dropdown
     id: component
@@ -95,10 +95,10 @@ body:
         - Template system
         - Testing framework
         - Uncategorized (default selected)
-        - Utilities        
+        - Utilities
     validations:
       required: true
-      
+
   - type: dropdown
     id: severity
     attributes:
@@ -109,7 +109,7 @@ body:
         - Release Blocker
     validations:
       required: true
-      
+
   - type: checkboxes
     id: easy-pickings
     attributes:
