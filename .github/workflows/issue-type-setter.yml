@@ -1,0 +1,43 @@
+name: Issue Type Setter
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  set-type:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            async function setIssueType() {
+              const issue = context.payload.issue;
+              const body = issue.body;
+              
+              // Extract the Type field value
+              const typeMatch = body.match(/### Type\s*\n\n(.+?)(?:\n\n|$)/s);
+              if (!typeMatch) return;
+              
+              let type = typeMatch[1].trim();
+              let issueType = 'issue';  // Default to 'issue'
+              
+              // Only set to 'bug' if explicitly selected
+              if (type === 'Bug') {
+                issueType = 'bug';
+              }
+              
+              // Set issue type
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: body,
+                repository_id: context.repo.id,
+                issue_type: issueType
+              });
+            }
+            
+            await setIssueType();
