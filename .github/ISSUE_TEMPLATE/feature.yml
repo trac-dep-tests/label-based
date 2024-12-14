@@ -7,13 +7,6 @@ body:
 
       '
 - type: textarea
-  id: summary
-  attributes:
-    label: Summary
-    description: A Summary of the issue
-  validations:
-    required: true
-- type: textarea
   id: description
   attributes:
     label: Description
