@@ -6,10 +6,6 @@ on:
 jobs:
   self-assign:
     runs-on: ubuntu-latest
-    # Check if comment starts with an assign command
-    if: |
-      startsWith(github.event.comment.body, '/assign') || 
-      startsWith(github.event.comment.body, '/take')
     permissions:
       issues: write
     
@@ -34,12 +30,25 @@ jobs:
               if (words.length > 1) {
                 const targetUser = words[1].replace(/^@/, '');
                 if (targetUser !== commentUser) {
-                  await github.rest.issues.createComment({
+                  const errorComment = await github.rest.issues.createComment({
                     owner: context.repo.owner,
                     repo: context.repo.repo,
                     issue_number: issueNumber,
                     body: `@${commentUser} You can only self-assign issues. Use \`${command}\` without a username.`
                   });
+                  
+                  // Delete error message after 30 seconds
+                  setTimeout(async () => {
+                    try {
+                      await github.rest.issues.deleteComment({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        comment_id: errorComment.data.id
+                      });
+                    } catch (error) {
+                      console.error('Error deleting comment:', error);
+                    }
+                  }, 30000);
                   return;
                 }
               }
@@ -67,20 +76,90 @@ jobs:
                   ? `@${commentUser} has taken this issue and is now the sole assignee.`
                   : `@${commentUser} has been assigned to this issue.`;
                 
-                await github.rest.issues.createComment({
+                // Create confirmation comment
+                const confirmComment = await github.rest.issues.createComment({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: issueNumber,
                   body: message
                 });
+                
+                // Delete assignment command comment
+                await github.rest.issues.deleteComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: comment.id
+                });
+                
+                // Delete confirmation comment after 15 seconds
+                setTimeout(async () => {
+                  try {
+                    await github.rest.issues.deleteComment({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      comment_id: confirmComment.data.id
+                    });
+                  } catch (error) {
+                    console.error('Error deleting confirmation:', error);
+                  }
+                }, 15000);
+                
               } catch (error) {
-                await github.rest.issues.createComment({
+                const errorComment = await github.rest.issues.createComment({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: issueNumber,
                   body: `Sorry @${commentUser}, there was an error processing your request: ${error.message}`
                 });
+                
+                // Delete error message after 30 seconds
+                setTimeout(async () => {
+                  try {
+                    await github.rest.issues.deleteComment({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      comment_id: errorComment.data.id
+                    });
+                  } catch (error) {
+                    console.error('Error deleting error comment:', error);
+                  }
+                }, 30000);
               }
             }
             
             await handleSelfAssign();
+  cleanup-comments:
+    needs: self-assign
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            // Wait for 15 seconds
+            await new Promise(resolve => setTimeout(resolve, 15000));
+            
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.issue.number,
+              per_page: 100
+            });
+            
+            // Find and delete bot comments related to assignment
+            for (const comment of comments.data) {
+              if (comment.user.type === 'Bot' && 
+                  (comment.body.includes('has been assigned') || 
+                   comment.body.includes('has taken this issue'))) {
+                try {
+                  await github.rest.issues.deleteComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    comment_id: comment.id
+                  });
+                } catch (error) {
+                  console.error('Error deleting comment:', error);
+                }
+              }
+            }
