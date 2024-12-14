@@ -1,5 +1,5 @@
-name: Bug Report
-description: Report a bug (similar to Trac defect tickets)
+name: New Issue
+description: Create a New Issue
 body:
   - type: markdown
     attributes:
@@ -62,15 +62,19 @@ body:
     id: has-patch
     attributes:
       label: Has Patch
-    validations:
-      required: true
+      options:
+        - label: Has Patch
+          description: Does this issue have a patch?
+          required: false
 
   - type: checkboxes
     id: ui-ux
     attributes:
       label: UI/UX
-    validations:
-      required: true
+      options:
+        - label: UI/UX
+          description: UI/UX?
+          required: false      
 
   - type: dropdown
     id: component
@@ -133,14 +137,19 @@ body:
     id: add-cc
     attributes:
       label: Add Cc
-    validations:
-      required: false
+      options:
+        - label: Add Cc
+          description: Add Cc
+          required: false
+      
 
   - type: checkboxes
     id: easy-pickings
     attributes:
       label: Easy Pickings
-    validations:
-      required: false
+      options:
+        - label: Easy Pickings
+          description: Easy Pickings
+          required: false
 
   
