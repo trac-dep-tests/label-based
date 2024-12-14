@@ -7,9 +7,12 @@ jobs:
   process-label-commands:
     runs-on: ubuntu-latest
     # Check if comment starts with a label command
-    if: contains(fromJson('["\/label", "\/remove-label", "\/labels"]'), startsWith(github.event.comment.body, '/label') && github.event.comment.body)
+    if: |
+      startsWith(github.event.comment.body, '/label') || 
+      startsWith(github.event.comment.body, '/remove-label') || 
+      startsWith(github.event.comment.body, '/labels')
     permissions:
-      issues: write    
+      issues: write
       
     steps:
       - uses: actions/github-script@v7
