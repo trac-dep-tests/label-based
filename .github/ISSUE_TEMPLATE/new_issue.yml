@@ -4,15 +4,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to fill out this bug report!
-
-  - type: textarea
-    id: summary
-    attributes:
-      label: Summary
-      description: A Summary of the issue
-    validations:
-      required: true
+        Thanks for taking the time to create an issue! Please fill out the form below to help us understand the problem you're experiencing.
 
   - type: textarea
     id: description
