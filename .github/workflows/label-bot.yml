@@ -1,4 +1,3 @@
-# .github/workflows/label-bot.yml
 name: Label Bot
 on:
   issue_comment:
@@ -9,43 +8,64 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       issues: write
-
+      
     steps:
       - uses: actions/github-script@v7
         with:
           script: |
-            const VALID_LABELS = [
-              'bug', 'feature', 'documentation', 'help wanted',
-              'good first issue', 'question', 'enhancement',
-              'performance', 'security', 'ui', 'api'
-            ];
-
             const LABEL_COMMANDS = {
               '/label': 'add',
               '/remove-label': 'remove',
               '/labels': 'list'
             };
-
+            
+            async function getValidLabels(github, context) {
+              try {
+                const labels = await github.paginate(github.rest.issues.listLabelsForRepo, {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  per_page: 100
+                });
+                
+                return labels.map(label => ({
+                  name: label.name,
+                  description: label.description,
+                  color: label.color
+                }));
+              } catch (error) {
+                console.error('Error fetching labels:', error);
+                return [];
+              }
+            }
+            
             async function processLabelCommand(context, github) {
               const comment = context.payload.comment;
               const issueNumber = context.payload.issue.number;
-
+              
+              // Get all valid labels for the repository
+              const validLabels = await getValidLabels(github, context);
+              const validLabelNames = validLabels.map(label => label.name.toLowerCase());
+              
               // Split comment into lines and process each line
               const lines = comment.body.split('\n');
-
+              
               for (const line of lines) {
                 const words = line.trim().split(/\s+/);
                 const command = words[0].toLowerCase();
-
+                
                 if (!LABEL_COMMANDS[command]) {
                   continue;
                 }
-
+                
                 const action = LABEL_COMMANDS[command];
-
+                
                 if (action === 'list') {
-                  // List all available labels
-                  const labelList = VALID_LABELS.map(label => `- ${label}`).join('\n');
+                  // List all available labels with descriptions and colors
+                  const labelList = validLabels.map(label => {
+                    const description = label.description ? ` - ${label.description}` : '';
+                    return `- \`${label.name}\` (#${label.color})${description}`;
+                  }).join('\n');
+                  
                   await github.rest.issues.createComment({
                     owner: context.repo.owner,
                     repo: context.repo.repo,
@@ -54,9 +74,9 @@ jobs:
                   });
                   continue;
                 }
-
+                
                 const requestedLabel = words.slice(1).join(' ').toLowerCase();
-
+                
                 if (!requestedLabel) {
                   await github.rest.issues.createComment({
                     owner: context.repo.owner,
@@ -66,46 +86,61 @@ jobs:
                   });
                   continue;
                 }
-
-                // Check if label is valid
-                if (!VALID_LABELS.includes(requestedLabel)) {
+                
+                // Check if label exists and find the exact name (preserving case)
+                const exactLabel = validLabels.find(label => 
+                  label.name.toLowerCase() === requestedLabel
+                );
+                
+                if (!exactLabel) {
+                  // If label doesn't exist, try to find similar labels
+                  const similarLabels = validLabels.filter(label =>
+                    label.name.toLowerCase().includes(requestedLabel) ||
+                    requestedLabel.includes(label.name.toLowerCase())
+                  ).map(label => `\`${label.name}\``);
+                  
+                  let errorMessage = `Invalid label: "${requestedLabel}". Use \`/labels\` to see available labels.`;
+                  if (similarLabels.length > 0) {
+                    errorMessage += `\n\nDid you mean one of these?\n${similarLabels.join(', ')}`;
+                  }
+                  
                   await github.rest.issues.createComment({
                     owner: context.repo.owner,
                     repo: context.repo.repo,
                     issue_number: issueNumber,
-                    body: `Invalid label: "${requestedLabel}". Use \`/labels\` to see available labels.`
+                    body: errorMessage
                   });
                   continue;
                 }
-
+                
                 try {
                   if (action === 'add') {
                     await github.rest.issues.addLabels({
                       owner: context.repo.owner,
                       repo: context.repo.repo,
                       issue_number: issueNumber,
-                      labels: [requestedLabel]
+                      labels: [exactLabel.name]
                     });
-
+                    
                     await github.rest.issues.createComment({
                       owner: context.repo.owner,
                       repo: context.repo.repo,
                       issue_number: issueNumber,
-                      body: `Added label: ${requestedLabel}`
+                      body: `Added label: ${exactLabel.name}`
                     });
                   } else if (action === 'remove') {
                     await github.rest.issues.removeLabel({
                       owner: context.repo.owner,
                       repo: context.repo.repo,
                       issue_number: issueNumber,
-                      name: requestedLabel
+                      name: exactLabel.name
                     });
-
+                    
                     await github.rest.issues.createComment({
                       owner: context.repo.owner,
                       repo: context.repo.repo,
                       issue_number: issueNumber,
-                      body: `Removed label: ${requestedLabel}`
+                      body: `Removed label: ${exactLabel.name}`
                     });
                   }
                 } catch (error) {
@@ -118,5 +153,5 @@ jobs:
                 }
               }
             }
-
+            
             await processLabelCommand(context, github);
