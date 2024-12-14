@@ -58,14 +58,14 @@ body:
       label: Keywords
       description: Keywords to help categorize the issue
 
-  - type: boolean
+  - type: checkboxes
     id: has-patch
     attributes:
       label: Has Patch
     validations:
       required: true
 
-  - type: boolean
+  - type: checkboxes
     id: ui-ux
     attributes:
       label: UI/UX
@@ -129,14 +129,14 @@ body:
     validations:
       required: true
       
-  - type: boolean
+  - type: checkboxes
     id: add-cc
     attributes:
       label: Add Cc
     validations:
       required: false
 
-  - type: boolean
+  - type: checkboxes
     id: easy-pickings
     attributes:
       label: Easy Pickings
