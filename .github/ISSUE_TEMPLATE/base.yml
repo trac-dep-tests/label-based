@@ -1,35 +1,31 @@
-# This is our base template - it won't be shown to users
-name: &name Issue Template  # Using an anchor for the name
-description: &description Create a new issue  # Using an anchor for the description
-
-# Define the common body elements that will be shared
-body: &baseBody  # This anchor will contain all shared fields
+body:
   - type: markdown
-    attributes: &welcomeMessage
+    attributes:
       value: |
         Thanks for taking the time to fill out this issue!
 
   - type: textarea
     id: summary
-    attributes: &summaryField
+    attributes:
       label: Summary
       description: A Summary of the issue
-    validations: &requiredField
+    validations:
       required: true
 
   - type: textarea
     id: description
-    attributes: &descriptionField
+    attributes:
       label: Description
       description: A Description of the issue
-    validations: *requiredField  # Reusing the required validation
+    validations:
+      required: true
 
   - type: dropdown
     id: version
-    attributes: &versionField
+    attributes: 
       label: Version
       description: What version is this occurring in?
-      options: &versionOptions
+      options: 
         - dev
         - 5.1
         - 5.0
@@ -45,13 +41,13 @@ body: &baseBody  # This anchor will contain all shared fields
 
   - type: input
     id: keywords
-    attributes: &keywordsField
+    attributes:
       label: Keywords
       description: Keywords to help categorize the issue
 
   - type: checkboxes
     id: has-patch
-    attributes: &patchField
+    attributes:
       label: Has Patch
       options:
         - label: Has Patch
@@ -59,18 +55,18 @@ body: &baseBody  # This anchor will contain all shared fields
 
   - type: checkboxes
     id: ui-ux
-    attributes: &uiField
+    attributes:
       label: UI/UX
       options:
         - label: UI/UX
-          required: false
+          required: false      
 
   - type: dropdown
     id: component
-    attributes: &componentField
+    attributes:
       label: Component
       description: Which component is affected?
-      options: &componentOptions
+      options:
         - contrib.admin
         - contrib.admindocs
         - contrib.auth
@@ -107,22 +103,24 @@ body: &baseBody  # This anchor will contain all shared fields
         - Template system
         - Testing framework
         - Uncategorized (default selected)
-        - Utilities
-    validations: *requiredField
-
+        - Utilities        
+    validations:
+      required: true
+      
   - type: dropdown
     id: severity
-    attributes: &severityField
+    attributes:
       label: Severity
       description: How severe is this issue?
-      options: &severityOptions
+      options:
         - Normal
         - Release Blocker
-    validations: *requiredField
-
+    validations:
+      required: true
+      
   - type: checkboxes
     id: easy-pickings
-    attributes: &easyField
+    attributes:
       label: Easy Pickings
       options:
         - label: Easy Pickings

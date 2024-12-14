@@ -1,0 +1,78 @@
+# .github/workflows/sync-templates.yml
+name: Sync Issue Templates
+on:
+  push:
+    paths:
+      - '.github/ISSUE_TEMPLATE/base.yml'
+      
+jobs:
+  sync-templates:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+          
+      - name: Sync Templates
+        run: |
+          python3 - <<EOF
+          import yaml
+          import os
+          
+          # Read base template
+          with open('.github/ISSUE_TEMPLATE/base.yml', 'r') as f:
+              base = yaml.safe_load(f)
+          
+          # Template configurations
+          templates = {
+              'bug': {
+                  'name': 'Bug Report',
+                  'description': 'Report a bug',
+                  'type': 'bug'
+              },
+              'feature': {
+                  'name': 'Feature Request',
+                  'description': 'Propose a new feature'
+              },
+              'cleanup': {
+                  'name': 'Cleanup / Optimization',
+                  'description': 'Suggest a cleanup or optimization'
+              }
+          }
+          
+          # Generate each template
+          for template_name, config in templates.items():
+              output = config.copy()
+              output['body'] = base['body']
+              
+              with open(f'.github/ISSUE_TEMPLATE/{template_name}.yml', 'w') as f:
+                  yaml.dump(output, f, sort_keys=False, allow_unicode=True)
+          EOF
+          
+      - name: Check for changes
+        id: changes
+        run: |
+          git diff --exit-code || echo "changes=true" >> $GITHUB_OUTPUT
+          
+      - name: Create Pull Request
+        if: steps.changes.outputs.changes == 'true'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          title: 'chore: sync issue templates from base'
+          commit-message: 'chore: sync issue templates from base template'
+          branch: sync-issue-templates
+          delete-branch: true
+          body: |
+            This PR was automatically created to sync changes from `base.yml` to all issue templates.
+            
+            Changes will be applied to:
+            - bug.yml
+            - feature.yml
+            - cleanup.yml

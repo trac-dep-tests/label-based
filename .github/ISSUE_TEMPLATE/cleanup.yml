@@ -1,37 +1,4 @@
-name: "Cleanup / Optimization"
-description: "Suggest a cleanup or optimization"
-type: cleanup
-body:
-  - type: markdown
-    attributes: *welcomeMessage
-  - type: textarea
-    id: summary
-    attributes: *summaryField
-    validations: *requiredField
-  - type: textarea
-    id: description
-    attributes: *descriptionField
-    validations: *requiredField
-  - type: dropdown
-    id: version
-    attributes: *versionField
-  - type: input
-    id: keywords
-    attributes: *keywordsField
-  - type: checkboxes
-    id: has-patch
-    attributes: *patchField
-  - type: checkboxes
-    id: ui-ux
-    attributes: *uiField
-  - type: dropdown
-    id: component
-    attributes: *componentField
-    validations: *requiredField
-  - type: dropdown
-    id: severity
-    attributes: *severityField
-    validations: *requiredField
-  - type: checkboxes
-    id: easy-pickings
-    attributes: *easyField
+# .github/ISSUE_TEMPLATE/cleanup.yml
+name: Cleanup / Optimization
+description: Suggest a cleanup or optimization
+_extends: base.yml
