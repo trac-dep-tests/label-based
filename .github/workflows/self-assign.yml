@@ -42,11 +42,12 @@ jobs:
               
               try {
                 if (command === '/take') {
-                  // First remove all assignees
-                  await github.rest.issues.removeAllAssignees({
+                  // Remove all assignees by setting assignees to an empty array
+                  await github.rest.issues.update({
                     owner: context.repo.owner,
                     repo: context.repo.repo,
-                    issue_number: issueNumber
+                    issue_number: issueNumber,
+                    assignees: []
                   });
                 }
                 
