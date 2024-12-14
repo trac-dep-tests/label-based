@@ -13,8 +13,6 @@ jobs:
       - uses: actions/github-script@v7
         with:
           script: |
-            const ASSIGN_COMMANDS = ['/assign', '/take'];
-            
             async function handleSelfAssign() {
               const comment = context.payload.comment;
               const issueNumber = context.payload.issue.number;
@@ -24,7 +22,7 @@ jobs:
               const words = comment.body.trim().split(/\s+/);
               const command = words[0].toLowerCase();
               
-              if (!ASSIGN_COMMANDS.includes(command)) {
+              if (!['/assign', '/take'].includes(command)) {
                 return;
               }
               
@@ -36,13 +34,22 @@ jobs:
                     owner: context.repo.owner,
                     repo: context.repo.repo,
                     issue_number: issueNumber,
-                    body: `@${commentUser} You can only self-assign issues. Use \`/assign\` without a username.`
+                    body: `@${commentUser} You can only self-assign issues. Use \`${command}\` without a username.`
                   });
                   return;
                 }
               }
               
               try {
+                if (command === '/take') {
+                  // First remove all assignees
+                  await github.rest.issues.removeAllAssignees({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issueNumber
+                  });
+                }
+                
                 // Assign the issue
                 await github.rest.issues.addAssignees({
                   owner: context.repo.owner,
@@ -51,18 +58,22 @@ jobs:
                   assignees: [commentUser]
                 });
                 
+                const message = command === '/take' 
+                  ? `@${commentUser} has taken this issue and is now the sole assignee.`
+                  : `@${commentUser} has been assigned to this issue.`;
+                
                 await github.rest.issues.createComment({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: issueNumber,
-                  body: `@${commentUser} has been assigned to this issue.`
+                  body: message
                 });
               } catch (error) {
                 await github.rest.issues.createComment({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: issueNumber,
-                  body: `Sorry @${commentUser}, there was an error assigning you to this issue: ${error.message}`
+                  body: `Sorry @${commentUser}, there was an error processing your request: ${error.message}`
                 });
               }
             }
