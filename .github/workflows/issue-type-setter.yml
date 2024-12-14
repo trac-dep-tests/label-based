@@ -16,30 +16,46 @@ jobs:
             async function setIssueType() {
               const issue = context.payload.issue;
               const body = issue.body;
-              log body;
               
               // Extract the Type field value
               const typeMatch = body.match(/### Type\s*\n\n(.+?)(?:\n\n|$)/s);
-              log typeMatch;
               if (!typeMatch) return;
               
-              let type = typeMatch[1].trim();
-              let issueType = 'issue';  // Default to 'issue'
+              const type = typeMatch[1].trim();
+              let issueType = 'ISSUE';  // Default to regular issue
               
-              // Only set to 'bug' if explicitly selected
+              // Only set to bug if explicitly selected
               if (type === 'Bug') {
-                issueType = 'bug';
+                issueType = 'BUG';
               }
               
-              // Set issue type
-              await github.rest.issues.update({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issue.number,
-                body: body,
-                repository_id: context.repo.id,
-                issue_type: issueType
-              });
+              // GraphQL mutation to update issue type
+              const mutation = `
+                mutation($issueId: ID!, $type: IssueType!) {
+                  updateIssue(
+                    input: {
+                      id: "${issue.node_id}",
+                      issueType: $type
+                    }
+                  ) {
+                    issue {
+                      id
+                      issueType
+                    }
+                  }
+                }
+              `;
+              
+              try {
+                await github.graphql(mutation, {
+                  issueId: issue.node_id,
+                  type: issueType
+                });
+                
+                console.log(`Successfully set issue type to ${issueType}`);
+              } catch (error) {
+                console.error('Error setting issue type:', error);
+              }
             }
             
             await setIssueType();
