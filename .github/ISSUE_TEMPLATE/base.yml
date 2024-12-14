@@ -1,36 +1,35 @@
-name: New Issue
-description: Create a New Issue
-body:
+# This is our base template - it won't be shown to users
+name: &name Issue Template  # Using an anchor for the name
+description: &description Create a new issue  # Using an anchor for the description
+
+# Define the common body elements that will be shared
+body: &baseBody  # This anchor will contain all shared fields
   - type: markdown
-    attributes:
+    attributes: &welcomeMessage
       value: |
-        Thanks for taking the time to create an issue! Please fill out the form below to help us understand the problem you're experiencing.
+        Thanks for taking the time to fill out this issue!
+
+  - type: textarea
+    id: summary
+    attributes: &summaryField
+      label: Summary
+      description: A Summary of the issue
+    validations: &requiredField
+      required: true
 
   - type: textarea
     id: description
-    attributes:
+    attributes: &descriptionField
       label: Description
       description: A Description of the issue
-    validations:
-      required: true
-
-  - type: dropdown
-    id: type
-    attributes:
-      label: Type
-      description: What type of issue is this?
-      options:
-        - Uncategorized
-        - Bug
-        - Feature
-        - Cleanup / optimization
+    validations: *requiredField  # Reusing the required validation
 
   - type: dropdown
     id: version
-    attributes: 
+    attributes: &versionField
       label: Version
       description: What version is this occurring in?
-      options: 
+      options: &versionOptions
         - dev
         - 5.1
         - 5.0
@@ -46,13 +45,13 @@ body:
 
   - type: input
     id: keywords
-    attributes:
+    attributes: &keywordsField
       label: Keywords
       description: Keywords to help categorize the issue
 
   - type: checkboxes
     id: has-patch
-    attributes:
+    attributes: &patchField
       label: Has Patch
       options:
         - label: Has Patch
@@ -60,18 +59,18 @@ body:
 
   - type: checkboxes
     id: ui-ux
-    attributes:
+    attributes: &uiField
       label: UI/UX
       options:
         - label: UI/UX
-          required: false      
+          required: false
 
   - type: dropdown
     id: component
-    attributes:
+    attributes: &componentField
       label: Component
       description: Which component is affected?
-      options:
+      options: &componentOptions
         - contrib.admin
         - contrib.admindocs
         - contrib.auth
@@ -108,27 +107,23 @@ body:
         - Template system
         - Testing framework
         - Uncategorized (default selected)
-        - Utilities        
-    validations:
-      required: true
-      
+        - Utilities
+    validations: *requiredField
+
   - type: dropdown
     id: severity
-    attributes:
+    attributes: &severityField
       label: Severity
-      description: How severe is this bug?
-      options:
+      description: How severe is this issue?
+      options: &severityOptions
         - Normal
         - Release Blocker
-    validations:
-      required: true
-      
+    validations: *requiredField
+
   - type: checkboxes
     id: easy-pickings
-    attributes:
+    attributes: &easyField
       label: Easy Pickings
       options:
         - label: Easy Pickings
           required: false
-
-  
