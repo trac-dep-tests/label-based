@@ -6,6 +6,10 @@ on:
 jobs:
   self-assign:
     runs-on: ubuntu-latest
+    # Check if comment starts with an assign command
+    if: |
+      startsWith(github.event.comment.body, '/assign') || 
+      startsWith(github.event.comment.body, '/take')
     permissions:
       issues: write
     
