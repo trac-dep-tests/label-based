@@ -1,0 +1,92 @@
+name: Self Assign
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  self-assign:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const ASSIGN_COMMANDS = ['/assign', '/take'];
+            
+            async function handleSelfAssign() {
+              const comment = context.payload.comment;
+              const issueNumber = context.payload.issue.number;
+              const commentUser = comment.user.login;
+              
+              // Check if comment is a self-assign command
+              const words = comment.body.trim().split(/\s+/);
+              const command = words[0].toLowerCase();
+              
+              if (!ASSIGN_COMMANDS.includes(command)) {
+                return;
+              }
+              
+              // If a username is specified, check if it matches commenter
+              if (words.length > 1) {
+                const targetUser = words[1].replace(/^@/, '');
+                if (targetUser !== commentUser) {
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issueNumber,
+                    body: `@${commentUser} You can only self-assign issues. Use \`/assign\` without a username.`
+                  });
+                  return;
+                }
+              }
+              
+              // Check if issue is already assigned
+              const issue = context.payload.issue;
+              if (issue.assignees && issue.assignees.length > 0) {
+                if (issue.assignees.some(assignee => assignee.login === commentUser)) {
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issueNumber,
+                    body: `@${commentUser} You are already assigned to this issue.`
+                  });
+                  return;
+                }
+                
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  body: `@${commentUser} This issue is already assigned to someone else.`
+                });
+                return;
+              }
+              
+              try {
+                // Assign the issue
+                await github.rest.issues.addAssignees({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  assignees: [commentUser]
+                });
+                
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  body: `@${commentUser} has been assigned to this issue.`
+                });
+              } catch (error) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  body: `Sorry @${commentUser}, there was an error assigning you to this issue: ${error.message}`
+                });
+              }
+            }
+            
+            await handleSelfAssign();
