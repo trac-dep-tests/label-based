@@ -17,7 +17,7 @@ jobs:
             async function getTriageTeamMembers() {
               const teamMembers = await github.paginate(github.rest.teams.listMembersInOrg, {
                 org: context.repo.owner,
-                team_slug: 'issue-triagers'
+                team_slug: 'issue-triagers-label-based'
               });
               return teamMembers.map(member => member.login);
             }
