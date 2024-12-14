@@ -20,7 +20,7 @@ There are 2 assignment commands:
 - `/take` - will make you the sole assignee of an issue
 - `/assign` - will add you to the current list of assignees
 
-There is a GHA that will remove these comments though to keep the comment history clean
+The GHA that updates assignment cleans up after itself to keep the comment history clean
 
 ## Updating Labels
 
@@ -31,4 +31,10 @@ There are 3 label commands
 label of `bug`
 - `/labels` 0 adding a comment of `/labels` will list all available labels
 
-Currently you can only add or remove one label at a time
+The GHA that updates labels cleans up after itself to keep the comment history clean
+
+### Known Issues
+
+1. Currently you can only add or remove one label at a time
+2. You have to refresh the page to get the Labels to update. There is a bot message indicating the labels have been
+updated though
