@@ -1,6 +1,6 @@
+# .github/workflows/sync-templates.yml
 name: Sync Issue Templates
 on:
-  workflow_dispatch:
   push:
     paths:
       - '.github/ISSUE_TEMPLATE/base.yml'
@@ -8,12 +8,11 @@ on:
 jobs:
   sync-templates:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
     
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -61,23 +60,13 @@ jobs:
                   yaml.dump(output, f, sort_keys=False, allow_unicode=True)
           EOF
           
-      - name: Check for changes
-        id: changes
+      - name: Commit changes
         run: |
-          git diff --exit-code || echo "changes=true" >> $GITHUB_OUTPUT
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions"
+          git add .github/ISSUE_TEMPLATE/*.yml
+          git diff --quiet && git diff --staged --quiet || git commit -m "chore: sync issue templates from base template"
           
-      - name: Create Pull Request
-        if: steps.changes.outputs.changes == 'true'
-        uses: peter-evans/create-pull-request@v5
-        with:
-          title: 'chore: sync issue templates from base'
-          commit-message: 'chore: sync issue templates from base template'
-          branch: sync-issue-templates
-          delete-branch: true
-          body: |
-            This PR was automatically created to sync changes from `base.yml` to all issue templates.
-            
-            Changes will be applied to:
-            - bug.yml
-            - feature.yml
-            - cleanup.yml
+      - name: Push changes
+        run: |
+          git push
