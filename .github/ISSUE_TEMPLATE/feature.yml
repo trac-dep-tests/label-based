@@ -1,5 +1,5 @@
 name: "Feature Request"
-description: Propose a new feature
+description: "Propose a new feature"
 type: feature
 body:
   - type: markdown
