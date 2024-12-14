@@ -1,0 +1,122 @@
+# .github/workflows/label-bot.yml
+name: Label Bot
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  process-label-commands:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const VALID_LABELS = [
+              'bug', 'feature', 'documentation', 'help wanted',
+              'good first issue', 'question', 'enhancement',
+              'performance', 'security', 'ui', 'api'
+            ];
+
+            const LABEL_COMMANDS = {
+              '/label': 'add',
+              '/remove-label': 'remove',
+              '/labels': 'list'
+            };
+
+            async function processLabelCommand(context, github) {
+              const comment = context.payload.comment;
+              const issueNumber = context.payload.issue.number;
+
+              // Split comment into lines and process each line
+              const lines = comment.body.split('\n');
+
+              for (const line of lines) {
+                const words = line.trim().split(/\s+/);
+                const command = words[0].toLowerCase();
+
+                if (!LABEL_COMMANDS[command]) {
+                  continue;
+                }
+
+                const action = LABEL_COMMANDS[command];
+
+                if (action === 'list') {
+                  // List all available labels
+                  const labelList = VALID_LABELS.map(label => `- ${label}`).join('\n');
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issueNumber,
+                    body: `Available labels:\n\n${labelList}\n\nUse \`/label label-name\` to add a label or \`/remove-label label-name\` to remove one.`
+                  });
+                  continue;
+                }
+
+                const requestedLabel = words.slice(1).join(' ').toLowerCase();
+
+                if (!requestedLabel) {
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issueNumber,
+                    body: `Please specify a label. Use \`/labels\` to see available labels.`
+                  });
+                  continue;
+                }
+
+                // Check if label is valid
+                if (!VALID_LABELS.includes(requestedLabel)) {
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issueNumber,
+                    body: `Invalid label: "${requestedLabel}". Use \`/labels\` to see available labels.`
+                  });
+                  continue;
+                }
+
+                try {
+                  if (action === 'add') {
+                    await github.rest.issues.addLabels({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: issueNumber,
+                      labels: [requestedLabel]
+                    });
+
+                    await github.rest.issues.createComment({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: issueNumber,
+                      body: `Added label: ${requestedLabel}`
+                    });
+                  } else if (action === 'remove') {
+                    await github.rest.issues.removeLabel({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: issueNumber,
+                      name: requestedLabel
+                    });
+
+                    await github.rest.issues.createComment({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: issueNumber,
+                      body: `Removed label: ${requestedLabel}`
+                    });
+                  }
+                } catch (error) {
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issueNumber,
+                    body: `Error processing label command: ${error.message}`
+                  });
+                }
+              }
+            }
+
+            await processLabelCommand(context, github);

@@ -1,0 +1,147 @@
+# .github/workflows/manage-triage-team.yml
+name: Manage Triage Team
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Run daily at midnight
+  workflow_dispatch:  # Allow manual trigger
+  pull_request:
+    types: [closed]
+  issues:
+    types: [closed]
+
+jobs:
+  update-team:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+      repository-projects: write
+
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.ADMIN_TOKEN }}  # Needs org admin rights
+          script: |
+            const TEAM_SLUG = 'issue-triagers';
+            const ORG_NAME = context.repo.owner;
+            const REPO_NAME = context.repo.repo;
+
+            async function getQualifiedContributors() {
+              const timeWindow = new Date();
+              timeWindow.setMonth(timeWindow.getMonth() - 3); // Look back 3 months
+
+              // Get all contributors who:
+              // 1. Have had PRs merged
+              // 2. Have participated in issue discussions
+              // 3. Have been active recently
+
+              const qualifiedUsers = new Set();
+
+              // Check merged PRs
+              const prs = await github.paginate(github.rest.pulls.list, {
+                owner: ORG_NAME,
+                repo: REPO_NAME,
+                state: 'closed',
+                sort: 'updated',
+                direction: 'desc',
+                per_page: 100
+              });
+
+              for (const pr of prs) {
+                if (pr.merged_at && new Date(pr.merged_at) > timeWindow) {
+                  qualifiedUsers.add(pr.user.login);
+                }
+              }
+
+              // Check issue participation
+              const issues = await github.paginate(github.rest.issues.listForRepo, {
+                owner: ORG_NAME,
+                repo: REPO_NAME,
+                state: 'all',
+                sort: 'updated',
+                direction: 'desc',
+                per_page: 100
+              });
+
+              for (const issue of issues) {
+                if (new Date(issue.updated_at) > timeWindow) {
+                  // Get comments for each issue
+                  const comments = await github.paginate(github.rest.issues.listComments, {
+                    owner: ORG_NAME,
+                    repo: REPO_NAME,
+                    issue_number: issue.number
+                  });
+
+                  // Count substantial comments (not just reactions or +1s)
+                  const commenters = new Map();
+                  for (const comment of comments) {
+                    if (comment.body.length > 50) { // Arbitrary threshold for "substantial"
+                      commenters.set(comment.user.login,
+                        (commenters.get(comment.user.login) || 0) + 1);
+                    }
+                  }
+
+                  // Add users with multiple substantial comments
+                  for (const [user, count] of commenters) {
+                    if (count >= 3) { // User has made at least 3 substantial comments
+                      qualifiedUsers.add(user);
+                    }
+                  }
+                }
+              }
+
+              return Array.from(qualifiedUsers);
+            }
+
+            async function updateTriageTeam() {
+              // Get current team members
+              const currentTeamMembers = await github.paginate(github.rest.teams.listMembersInOrg, {
+                org: ORG_NAME,
+                team_slug: TEAM_SLUG
+              });
+              const currentMembers = new Set(currentTeamMembers.map(m => m.login));
+
+              // Get qualified contributors
+              const qualifiedContributors = await getQualifiedContributors();
+
+              // Add new qualified members
+              for (const contributor of qualifiedContributors) {
+                if (!currentMembers.has(contributor)) {
+                  try {
+                    await github.rest.teams.addOrUpdateMembershipForUserInOrg({
+                      org: ORG_NAME,
+                      team_slug: TEAM_SLUG,
+                      username: contributor
+                    });
+
+                    // Notify new team member
+                    await github.rest.issues.createComment({
+                      owner: ORG_NAME,
+                      repo: REPO_NAME,
+                      issue_number: context.issue.number,
+                      body: `@${contributor} has been added to the triage team based on their valuable contributions! 🎉`
+                    });
+                  } catch (e) {
+                    console.log(`Failed to add ${contributor} to team: ${e.message}`);
+                  }
+                }
+              }
+
+              // Remove inactive members
+              for (const member of currentMembers) {
+                if (!qualifiedContributors.includes(member)) {
+                  try {
+                    await github.rest.teams.removeMembershipForUserInOrg({
+                      org: ORG_NAME,
+                      team_slug: TEAM_SLUG,
+                      username: member
+                    });
+                  } catch (e) {
+                    console.log(`Failed to remove ${member} from team: ${e.message}`);
+                  }
+                }
+              }
+            }
+
+            await updateTriageTeam();

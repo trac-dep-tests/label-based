@@ -1,0 +1,28 @@
+# .github/workflows/triage.yml
+name: Issue Triage Workflow
+on:
+  issues:
+    types: [opened, labeled, unlabeled, reopened]
+  issue_comment:
+    types: [created]
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    if: github.event.issue.state == 'open'
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            async function getTriageTeamMembers() {
+              const teamMembers = await github.paginate(github.rest.teams.listMembersInOrg, {
+                org: context.repo.owner,
+                team_slug: 'issue-triagers'
+              });
+              return teamMembers.map(member => member.login);
+            }
+
+            const REQUIRED_VOTES = 2;
+            const TRIAGE_TEAM = await getTriageTeamMembers();
+
+            // Rest of the triage workflow remains the same...
