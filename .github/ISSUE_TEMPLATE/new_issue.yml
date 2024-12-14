@@ -22,8 +22,8 @@ body:
       options:
         - Uncategorized
         - Bug
-        - New Feature
-        - Cleanup / Optimization
+        - Feature
+        - Cleanup / optimization
 
   - type: dropdown
     id: version
