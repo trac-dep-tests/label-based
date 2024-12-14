@@ -132,15 +132,6 @@ body:
       required: true
       
   - type: checkboxes
-    id: add-cc
-    attributes:
-      label: Add Cc
-      options:
-        - label: Add Cc
-          required: false
-      
-
-  - type: checkboxes
     id: easy-pickings
     attributes:
       label: Easy Pickings
