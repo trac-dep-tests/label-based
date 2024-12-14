@@ -42,28 +42,6 @@ jobs:
                 }
               }
               
-              // Check if issue is already assigned
-              const issue = context.payload.issue;
-              if (issue.assignees && issue.assignees.length > 0) {
-                if (issue.assignees.some(assignee => assignee.login === commentUser)) {
-                  await github.rest.issues.createComment({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    issue_number: issueNumber,
-                    body: `@${commentUser} You are already assigned to this issue.`
-                  });
-                  return;
-                }
-                
-                await github.rest.issues.createComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: issueNumber,
-                  body: `@${commentUser} This issue is already assigned to someone else.`
-                });
-                return;
-              }
-              
               try {
                 // Assign the issue
                 await github.rest.issues.addAssignees({
